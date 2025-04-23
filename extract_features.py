@@ -1,118 +1,73 @@
 import os
+import pandas as pd
 import librosa
 import numpy as np
-import pandas as pd
-from scipy.stats import skew, kurtosis
 
 # === Settings ===
-audio_root = "./audio_samples/Classical_Piano"
-output_feature_csv = "audio_features.csv"
+audio_root = "./audio_samples/reaper/processed"
 output_label_csv = "dataset_labels.csv"
-output_classification_csv = "classification_labels.csv"
+output_feature_csv = "audio_features.csv"
 
-# === Label Mapping for classification ===
-label_mapping = {
-    "flat": 0,
-    "low_boost": 1,
-    "low_cut": 2,
-    "mid_boost": 3,
-    "mid_cut": 4,
-    "high_boost": 5,
-    "high_cut": 6,
-}
+band_freqs = [80, 240, 2500, 4000, 10000]
 
-# === Helper: Extract audio features ===
 def extract_features(file_path):
     y, sr = librosa.load(file_path, sr=44100)
-    spectral_centroid = np.mean(librosa.feature.spectral_centroid(y=y, sr=sr))
-    spectral_bandwidth = np.mean(librosa.feature.spectral_bandwidth(y=y, sr=sr))
-    spectral_rolloff = np.mean(librosa.feature.spectral_rolloff(y=y, sr=sr))
+    features = {}
+    features["spectral_centroid"] = np.mean(librosa.feature.spectral_centroid(y=y, sr=sr))
+    features["spectral_bandwidth"] = np.mean(librosa.feature.spectral_bandwidth(y=y, sr=sr))
+    features["spectral_rolloff"] = np.mean(librosa.feature.spectral_rolloff(y=y, sr=sr))
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
-    mfcc_mean = np.mean(mfccs[:3], axis=1)
-    rms_energy = np.mean(librosa.feature.rms(y=y))
-    zero_crossing_rate = np.mean(librosa.feature.zero_crossing_rate(y))
-    spectral_contrast = np.mean(librosa.feature.spectral_contrast(y=y, sr=sr))
-    return { #correlation分析
-        "spectral_centroid": spectral_centroid,
-        # "spectral_bandwidth": spectral_bandwidth, #有用前後那個
-        "spectral_rolloff": spectral_rolloff,
-        "mfcc_1": mfcc_mean[0],
-        "mfcc_2": mfcc_mean[1],
-        "mfcc_3": mfcc_mean[2],
-        "mfcc_4": mfcc_mean[3],
-        "mfcc_5": mfcc_mean[4],
-        "mfcc_6": mfcc_mean[5],
-        "mfcc_7": mfcc_mean[6],
-        "mfcc_8": mfcc_mean[7],
-        "mfcc_9": mfcc_mean[8],
-        "mfcc_10": mfcc_mean[9],
-        "mfcc_11": mfcc_mean[10],
-        "mfcc_12": mfcc_mean[11],
-        "mfcc_13": mfcc_mean[12],
-        "rms_energy": rms_energy,
-        # "zero_crossing_rate": zero_crossing_rate, 
-        # "spectral_contrast": spectral_contrast,
-        # "skewness": skew(y),
-        # "kurtosis": kurtosis(y)
-    }
+    for i in range(mfccs.shape[0]):
+        features[f"mfcc_{i+1}"] = np.mean(mfccs[i])
+    features["rms_energy"] = np.mean(librosa.feature.rms(y=y))
+    # 可以加其他特徵（如 zcr, contrast...），不需要可先註解
+    # features["zero_crossing_rate"] = np.mean(librosa.feature.zero_crossing_rate(y))
+    return features
 
-# === Helper: Parse filename into EQ regression labels ===
 def parse_eq_label(filename):
-    label = {"EQ_300": 0, "EQ_600": 0, "EQ_1000": 0}
-    name_parts = filename.lower().split("_")
-    if "eq" in name_parts:
-        try:
-            idx = name_parts.index("eq")
-            freq = name_parts[idx + 1]
-            action = name_parts[idx + 2]
-            if freq in ["300", "600", "1000"]:
-                value = 8.6 if action == "boost" else -8.6
-                label[f"EQ_{freq}"] = value
-        except:
-            pass  # fallback to all 0
+    label = {f"EQ_{freq}": 0 for freq in band_freqs}
+    name = filename.replace(".wav", "")
+    for freq in band_freqs:
+        freq_str = str(freq)
+        if freq_str in name:
+            # e.g. "bell1_240_+3" → 找 freq 字串出現後的 "_+3"
+            parts = name.split("_")
+            for idx, part in enumerate(parts):
+                if part == freq_str and idx+1 < len(parts):
+                    try:
+                        db_val = float(parts[idx+1])
+                        label[f"EQ_{freq}"] = db_val
+                    except ValueError:
+                        # 避免 +3 這種寫法有字串頭 "+"
+                        try:
+                            db_val = float(parts[idx+1].replace("+",""))
+                            if "+" in parts[idx+1]: db_val = abs(db_val)
+                            if "-" in parts[idx+1]: db_val = -abs(db_val)
+                            label[f"EQ_{freq}"] = db_val
+                        except:
+                            label[f"EQ_{freq}"] = 0
     return label
 
-# === Helper: Classify filename into 7-class label ===
-def parse_class_label(filename):
-    name = filename.lower()
-    if "eq" not in name:
-        return label_mapping["flat"]
-    if "300" in name:
-        return label_mapping["low_boost"] if "boost" in name else label_mapping["low_cut"]
-    if "600" in name:
-        return label_mapping["mid_boost"] if "boost" in name else label_mapping["mid_cut"]
-    if "1000" in name:
-        return label_mapping["high_boost"] if "boost" in name else label_mapping["high_cut"]
-    return label_mapping["flat"]
-
-# === Main Loop ===
+# Main loop
 feature_rows = []
-label_rows = []
-classification_rows = []
+for fname in sorted(os.listdir(audio_root)):
+    if fname.endswith(".wav"):
+        fpath = os.path.join(audio_root, fname)
+        feats = extract_features(fpath)
+        feats["file"] = fname
+        feature_rows.append(feats)
 
-for root, _, files in os.walk(audio_root):
-    for fname in files:
-        if fname.endswith(".wav"):
-            path = os.path.join(root, fname)
-            print(f"Processing: {fname}")
-            feats = extract_features(path)
-            feats["file"] = fname
-            feature_rows.append(feats)
-
-            label = parse_eq_label(fname)
-            label["file"] = fname
-            label_rows.append(label)
-
-            classification_label = {"label": parse_class_label(fname),"file": fname}
-            classification_rows.append(classification_label)
-
-# === Save to CSV ===
 features_df = pd.DataFrame(feature_rows)
-labels_df = pd.DataFrame(label_rows)
-classification_df = pd.DataFrame(classification_rows)
-
 features_df.to_csv(output_feature_csv, index=False)
-labels_df.to_csv(output_label_csv, index=False)
-classification_df.to_csv(output_classification_csv, index=False)
+print(f"✅ All features saved to {output_feature_csv}!")
 
-print("✅ All feature, regression, and classification CSV files generated!")
+label_rows = []
+for fname in sorted(os.listdir(audio_root)):
+    if fname.endswith(".wav"):
+        label = parse_eq_label(fname)
+        label["file"] = fname
+        label_rows.append(label)
+
+labels_df = pd.DataFrame(label_rows)
+labels_df.to_csv(output_label_csv, index=False)
+print(f"✅ All EQ labels saved to {output_label_csv}!")

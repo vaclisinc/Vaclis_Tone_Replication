@@ -24,4 +24,3 @@ function set_eq_band(track, fxidx, bandidx, freq, gain_db, q, bandtype)
   local fxidx = reaper.TrackFX_GetEQ(track, false)
   set_eq_band(track, fxidx, bandidx, 100, 0.251, 3.0, 0)
   
-根據 doc，paramidx 其實是組合的，但 REAPER 這裡直接給 function 3個 index
