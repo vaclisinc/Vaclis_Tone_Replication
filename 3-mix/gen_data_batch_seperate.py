@@ -29,20 +29,20 @@ for fname in os.listdir(output_dir):
 print(f"目前已完成組合數：{len(existing_set)}")
 print(f"尚未產生組合數：{len(all_combos) - len(existing_set)}")
 
-# 產出未完成 list
-remaining_combos = [combo for combo in all_combos if combo not in existing_set]
+# # 產出未完成 list
+# remaining_combos = [combo for combo in all_combos if combo not in existing_set]
 
-# 把缺少的組合分批，每批 1000 個
-batches = [remaining_combos[i:i+1000] for i in range(0, len(remaining_combos), 1000)]
-print(f"總共需要再執行 {len(batches)} 批次")
+# # 把缺少的組合分批，每批 1000 個
+# batches = [remaining_combos[i:i+1000] for i in range(0, len(remaining_combos), 1000)]
+# print(f"總共需要再執行 {len(batches)} 批次")
 
 
-remaining_combos = [combo for combo in all_combos if combo not in existing_set]
-batches = [remaining_combos[i:i+1000] for i in range(0, len(remaining_combos), 1000)]
+# remaining_combos = [combo for combo in all_combos if combo not in existing_set]
+# batches = [remaining_combos[i:i+1000] for i in range(0, len(remaining_combos), 1000)]
 
-for idx, batch in enumerate(batches):
-    with open(f"batch_{idx+1:02d}.lua", "w") as f:
-        f.write("local combos = {\n")
-        for c in batch:
-            f.write(f"    {{{c[0]}, {c[1]}, {c[2]}, {c[3]}, {c[4]}}},\n")
-        f.write("}\nreturn combos\n")
+# for idx, batch in enumerate(batches):
+#     with open(f"batch_{idx+1:02d}.lua", "w") as f:
+#         f.write("local combos = {\n")
+#         for c in batch:
+#             f.write(f"    {{{c[0]}, {c[1]}, {c[2]}, {c[3]}, {c[4]}}},\n")
+#         f.write("}\nreturn combos\n")

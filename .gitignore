@@ -10,4 +10,8 @@
 **/Icon?
 **/Icon\r
 server.txt
-useforrunning.ipynb
+audio_samples/*
+extract_features.py
+audio_features.csv
+dataset_labels.csv
+baseline.ipynb

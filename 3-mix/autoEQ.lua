@@ -1,5 +1,5 @@
 -- === CONFIG ===
-local combos = dofile("/Users/vaclis./Documents/project/vtr/audio_samples/reaper/batch_03.lua")
+local combos = dofile("/Users/vaclis./Documents/project/vtr/audio_samples/reaper/batch_14.lua")
 
 local input_dir = "/Users/vaclis./Documents/project/vtr/audio_samples/reaper/raw"
 local output_dir = "/Users/vaclis./Documents/project/vtr/audio_samples/reaper/processed/"
