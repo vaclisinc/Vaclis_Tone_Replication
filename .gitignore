@@ -11,7 +11,5 @@
 **/Icon\r
 server.txt
 audio_samples/*
-extract_features.py
-audio_features.csv
-dataset_labels.csv
-baseline.ipynb
+related_works/*
+final_presentation/*
