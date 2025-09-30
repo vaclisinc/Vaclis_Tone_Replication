@@ -1,4 +1,4 @@
-# Vaclis Tone Replication:
+# Vaclis Tone Replication [arXiv](https://arxiv.org/abs/2509.24404):
 
 - An AI-powered system for tone replication in music production by predicting EQ settings directly from audio features. 
 - Creating a dataset of piano recordings with varied EQ parameters, our VTR neural network model accurately estimates multi-band EQ values (MSE: 0.0216). 
