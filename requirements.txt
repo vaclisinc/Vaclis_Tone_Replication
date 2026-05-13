@@ -11,8 +11,8 @@ cycler==0.12.1
 debugpy==1.8.12
 decorator==5.2.1
 executing==2.2.0
-filelock==3.18.0
-fonttools==4.56.0
+filelock==3.29.0
+fonttools==4.62.1
 fsspec==2025.3.2
 idna==3.15
 ipykernel==6.29.5
@@ -47,7 +47,7 @@ psutil==7.0.0
 ptyprocess==0.7.0
 pure_eval==0.2.3
 pycparser==2.22
-Pygments==2.19.1
+Pygments==2.20.0
 pyparsing==3.2.1
 python-dateutil==2.9.0.post0
 pytz==2025.2
@@ -66,7 +66,7 @@ standard-chunk==3.13.0
 standard-sunau==3.13.0
 sympy==1.14.0
 threadpoolctl==3.6.0
-torch==2.7.1
+torch==2.11.0
 tornado>=6.5.0
 traitlets==5.14.3
 typing_extensions==4.13.1
